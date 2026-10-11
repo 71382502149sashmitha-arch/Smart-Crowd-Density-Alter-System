@@ -987,13 +987,13 @@ function bindEvents() {
 // THINGSPEAK IOT CLOUD INTEGRATION MODULE
 // ==========================================
 const thingSpeak = {
-  channelId: '',
-  writeApiKey: '',
-  readApiKey: '',
+  channelId: '3531433',
+  writeApiKey: 'SMC6F9WGAFKCSOA1',
+  readApiKey: 'CZEXV3R3Z6256614',
   mode: 'push', // 'push' or 'pull'
   intervalMs: 15000,
   autoSync: true,
-  isConfigured: false,
+  isConfigured: true,
   lastSyncTime: 0,
   countdownSec: 15,
   countdownInterval: null,
@@ -1002,9 +1002,9 @@ const thingSpeak = {
 
 function loadThingSpeakConfig() {
   try {
-    thingSpeak.channelId = localStorage.getItem('ts_channelId') || '';
-    thingSpeak.writeApiKey = localStorage.getItem('ts_writeApiKey') || '';
-    thingSpeak.readApiKey = localStorage.getItem('ts_readApiKey') || '';
+    thingSpeak.channelId = localStorage.getItem('ts_channelId') || '3531433';
+    thingSpeak.writeApiKey = localStorage.getItem('ts_writeApiKey') || 'SMC6F9WGAFKCSOA1';
+    thingSpeak.readApiKey = localStorage.getItem('ts_readApiKey') || 'CZEXV3R3Z6256614';
     thingSpeak.mode = localStorage.getItem('ts_mode') || 'push';
     thingSpeak.intervalMs = parseInt(localStorage.getItem('ts_intervalMs') || '15000', 10);
     thingSpeak.autoSync = localStorage.getItem('ts_autoSync') !== 'false';

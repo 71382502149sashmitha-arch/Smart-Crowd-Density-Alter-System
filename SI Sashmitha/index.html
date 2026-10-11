@@ -636,7 +636,7 @@
             <!-- Channel ID -->
             <div class="form-group">
               <label for="tsInputChannelId">ThingSpeak Channel ID <span class="req">*</span></label>
-              <input type="text" id="tsInputChannelId" class="form-input" placeholder="e.g. 2458912" required>
+              <input type="text" id="tsInputChannelId" class="form-input" placeholder="e.g. 3531433" value="3531433" required>
               <span class="form-help">Found on your ThingSpeak Channel page.</span>
             </div>
 
@@ -644,7 +644,7 @@
             <div class="form-group">
               <label for="tsSelectMode">Sync Direction</label>
               <select id="tsSelectMode" class="form-select">
-                <option value="push">Push (Publish local telemetry to ThingSpeak)</option>
+                <option value="push" selected>Push (Publish local telemetry to ThingSpeak)</option>
                 <option value="pull">Pull (Monitor remote hardware from ThingSpeak)</option>
               </select>
               <span class="form-help">Push sends simulated/USB data; Pull fetches remote channel feeds.</span>
@@ -654,7 +654,7 @@
             <div class="form-group">
               <label for="tsInputWriteKey">Write API Key (Required for Push)</label>
               <div class="input-with-action">
-                <input type="password" id="tsInputWriteKey" class="form-input" placeholder="16-character Write Key">
+                <input type="password" id="tsInputWriteKey" class="form-input" placeholder="16-character Write Key" value="SMC6F9WGAFKCSOA1">
                 <button type="button" class="btn-input-eye" id="btnToggleWriteKey" title="Toggle visibility">👁</button>
               </div>
               <span class="form-help">From Channel &rarr; API Keys tab.</span>
@@ -664,7 +664,7 @@
             <div class="form-group">
               <label for="tsInputReadKey">Read API Key (Optional for Public channels)</label>
               <div class="input-with-action">
-                <input type="password" id="tsInputReadKey" class="form-input" placeholder="16-character Read Key">
+                <input type="password" id="tsInputReadKey" class="form-input" placeholder="16-character Read Key" value="CZEXV3R3Z6256614">
                 <button type="button" class="btn-input-eye" id="btnToggleReadKey" title="Toggle visibility">👁</button>
               </div>
               <span class="form-help">Required if your channel is set to Private.</span>

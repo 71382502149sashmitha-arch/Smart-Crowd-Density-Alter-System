@@ -69,6 +69,20 @@ It operates in **two synchronized modes**:
 
 ## 🔌 Hardware Pinout Configuration
 
+### Wokwi ESP32 DevKit V4 Pinout (Active Simulation)
+| ESP32 Pin | Component | Description / Function |
+| :--- | :--- | :--- |
+| `GPIO 19` | PIR Motion Sensor (OUT) | Passive Infrared motion detection |
+| `GPIO 5`  | HC-SR04 (TRIG) | Ultrasonic pulse trigger output |
+| `GPIO 18` | HC-SR04 (ECHO) | Ultrasonic pulse echo input |
+| `GPIO 21` | Green LED (+ 220Ω) | Normal Safe Indicator |
+| `GPIO 22` | Yellow LED (+ 220Ω) | Capacity Warning Indicator |
+| `GPIO 23` | Red LED (+ 220Ω) | Critical Overcrowding Indicator |
+| `GPIO 25` | Piezo Buzzer (+) | 1000 Hz Alarm tone output |
+| `5V / VIN`| VCC Rail | Powers HC-SR04 and PIR sensor |
+| `GND`     | Ground Rail | Common circuit ground |
+
+### Arduino Uno Pinout (Physical / Web Serial Bridge)
 | Arduino Uno Pin | Component | Description / Function |
 | :--- | :--- | :--- |
 | `D2` | PIR Motion Sensor (OUT) | Passive Infrared motion detection |
@@ -85,7 +99,11 @@ It operates in **two synchronized modes**:
 
 ## ☁️ ThingSpeak IoT Cloud Integration
 
-The dashboard includes full **MathWorks ThingSpeak IoT Cloud** connectivity. You can configure your Channel ID and API keys directly via the **"ThingSpeak IoT"** or **"Configure API"** button.
+The dashboard and ESP32 firmware include full **MathWorks ThingSpeak IoT Cloud** connectivity configured for **Channel #3531433**.
+
+- **Channel ID**: `3531433` ([View Channel on ThingSpeak](https://thingspeak.com/channels/3531433))
+- **Write API Key**: `SMC6F9WGAFKCSOA1`
+- **Read API Key**: `CZEXV3R3Z6256614`
 
 ### Field Assignment Mapping
 * **Field 1 (`field1`)**: Current Crowd Density Count

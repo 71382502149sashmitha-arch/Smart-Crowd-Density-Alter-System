@@ -22,8 +22,10 @@ const char* WIFI_SSID     = "Wokwi-GUEST";
 const char* WIFI_PASSWORD = "";
 
 // ----------------- THINGSPEAK CONFIGURATION -----------------
-const char* WRITE_API_KEY = "LQA9MOABWSQHZDNC"; // Your ThingSpeak Write API Key
-const char* SERVER_URL    = "http://api.thingspeak.com/update";
+const unsigned long CHANNEL_ID = 3531433;                // Your ThingSpeak Channel ID
+const char* WRITE_API_KEY      = "SMC6F9WGAFKCSOA1";      // Your ThingSpeak Write API Key
+const char* READ_API_KEY       = "CZEXV3R3Z6256614";      // Your ThingSpeak Read API Key
+const char* SERVER_URL         = "http://api.thingspeak.com/update";
 
 int crowdCount = 0;
 bool personCrossing = false;
@@ -56,7 +58,7 @@ void sendThingSpeak(int count, long dist, int motion, int tier, int buzzer) {
                "&field4=" + String(tier) +
                "&field5=" + String(buzzer);
 
-  Serial.println("\n[ThingSpeak] Uploading telemetry to Channel #3531339...");
+  Serial.println("\n[ThingSpeak] Uploading telemetry to Channel #3531433...");
   http.begin(url);
   int httpCode = http.GET();
 
