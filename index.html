@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Crowd Density Alert System | 25EE256</title>
+  <meta name="description" content="Interactive IoT & Sensor Telemetry Dashboard for Smart Crowd Density Alert System - Case Study #2 (25EE256 Sensor and Instrumentation).">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Background Glow Accents -->
+  <div class="ambient-glow glow-1" id="ambientGlow1"></div>
+  <div class="ambient-glow glow-2" id="ambientGlow2"></div>
+
+  <!-- Header Section -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="badge-tag">
+        <span class="pulse-dot"></span>
+        <span class="tag-text">25EE256 &bull; SENSOR &amp; INSTRUMENTATION</span>
+      </div>
+      <h1 class="project-title">Smart Crowd Density Alert System</h1>
+      <p class="project-subtitle">Case Study #2 &bull; Arduino Uno &bull; HC-SR04 Sonar &bull; PIR Motion Sensor &bull; Wokwi Twin</p>
+    </div>
+    
+    <div class="header-actions">
+      <!-- Web Serial Hardware Connect -->
+      <button class="btn btn-outline" id="btnConnectSerial" title="Connect physical Arduino Uno via USB Serial">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+        </svg>
+        <span id="serialBtnText">Connect USB Serial</span>
+      </button>
+
+      <!-- Audio Alarm Toggle -->
+      <button class="btn btn-secondary" id="btnAudioToggle" title="Enable/Mute 1kHz Piezo Buzzer Synthesizer">
+        <svg class="icon icon-volume" id="audioIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path class="vol-wave" d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          <path class="vol-wave" d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+        <span id="audioBtnText">Sound: OFF</span>
+      </button>
+
+      <!-- ThingSpeak IoT Cloud Configuration -->
+      <button class="btn btn-thingspeak" id="btnOpenThingSpeak" title="Configure ThingSpeak IoT Cloud API">
+        <svg class="icon icon-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+        </svg>
+        <span id="thingspeakBtnText">ThingSpeak IoT</span>
+        <span class="thingspeak-status-dot" id="tsStatusDot"></span>
+      </button>
+
+      <!-- Pinout & Info Modal Button -->
+      <button class="btn btn-ghost" id="btnOpenDocs" title="Hardware Pinout & Circuit Schematic">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Pinout &amp; Docs</span>
+      </button>
+
+      <!-- Wokwi External Link -->
+      <a href="https://wokwi.com/projects/476163947415643137" target="_blank" rel="noopener noreferrer" class="btn btn-wokwi" title="Open Simulation in Wokwi">
+        <span>Wokwi Sim</span>
+        <svg class="icon icon-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- Live Mode / Source Banner -->
+  <div class="system-status-bar" id="systemStatusBar">
+    <div class="status-indicator">
+      <span class="status-beacon" id="statusBeacon"></span>
+      <span class="status-mode-label" id="statusModeLabel">VIRTUAL SIMULATOR RUNNING (300ms Loop)</span>
+    </div>
+    <div class="status-metrics-strip">
+      <div class="strip-item"><strong>Sampling Interval:</strong> 300 ms</div>
+      <div class="strip-item"><strong>Ultrasonic Range:</strong> 0 &ndash; 400 cm</div>
+      <div class="strip-item"><strong>Trigger Threshold:</strong> &lt; 50 cm</div>
+      <div class="strip-item"><strong>Critical Capacity:</strong> &ge; 10 Persons</div>
+      <div class="strip-item ts-strip-item" id="tsSyncStripItem">
+        <strong>ThingSpeak Cloud:</strong>
+        <span class="ts-status-badge" id="tsSyncStatusBadge">Disabled (Click to Config)</span>
+      </div>
+    </div>
+  </div>
+
+  <main class="dashboard-grid">
+    <!-- MASTER ALERT BANNER (TIER STATUS) -->
+    <section class="card alert-hero tier-normal" id="alertHeroCard">
+      <div class="alert-hero-content">
+        <div class="alert-icon-wrapper" id="alertIconWrapper">
+          <!-- Green Shield by default -->
+          <svg class="alert-icon" id="alertHeroIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+        </div>
+        <div class="alert-info">
+          <div class="tier-badge" id="tierBadge">TIER 1 &bull; COUNT &lt; 5</div>
+          <h2 class="alert-title" id="alertTitle">NORMAL (Safe)</h2>
+          <p class="alert-desc" id="alertDesc">Density within safe limits. Green indicator active. Flow is optimal.</p>
+        </div>
+      </div>
+      <div class="alert-hero-meta">
+        <div class="alarm-status-pill" id="buzzerPill">
+          <span class="buzzer-pulse-dot" id="buzzerPulseDot"></span>
+          <span id="buzzerPillText">BUZZER: SILENT</span>
+        </div>
+        <div class="led-state-summary" id="ledStateSummary">
+          <span class="led-pill led-pill-green active">GREEN HIGH</span>
+          <span class="led-pill led-pill-yellow">YELLOW LOW</span>
+          <span class="led-pill led-pill-red">RED LOW</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- THINGSPEAK CLOUD TELEMETRY WIDGET -->
+    <section class="card thingspeak-cloud-card" id="tsCloudCard">
+      <div class="ts-card-left">
+        <div class="ts-icon-badge">
+          <svg class="icon icon-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+          </svg>
+        </div>
+        <div class="ts-meta-info">
+          <div class="ts-title-row">
+            <h3 class="ts-heading">ThingSpeak IoT Cloud Sync</h3>
+            <span class="ts-mode-tag" id="tsModeTag">SYNC OFF</span>
+            <span class="ts-channel-tag" id="tsChannelTag">Channel: Not Configured</span>
+          </div>
+          <div class="ts-payload-preview" id="tsPayloadPreview">
+            <span class="payload-field"><strong>F1</strong> (Count): <span id="tsF1">-</span></span>
+            <span class="payload-field"><strong>F2</strong> (Dist): <span id="tsF2">-</span> cm</span>
+            <span class="payload-field"><strong>F3</strong> (PIR): <span id="tsF3">-</span></span>
+            <span class="payload-field"><strong>F4</strong> (Tier): <span id="tsF4">-</span></span>
+            <span class="payload-field"><strong>F5</strong> (Buzzer): <span id="tsF5">-</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ts-card-right">
+        <div class="ts-countdown-wrapper">
+          <div class="ts-timer-label">Next Cloud Sync:</div>
+          <div class="ts-timer-val" id="tsTimerVal">Ready</div>
+        </div>
+        <div class="ts-actions">
+          <button class="btn btn-sm btn-primary" id="btnTsManualSync" title="Force an immediate push/pull now">Sync Now</button>
+          <button class="btn btn-sm btn-outline" id="btnTsConfigure" title="Open ThingSpeak API Settings">Configure API</button>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-ghost" id="btnTsViewChannel" style="display:none;" title="Open Channel on ThingSpeak.com">
+            <span>View Channel</span>
+            <svg class="icon-tiny" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- KEY TELEMETRY METRICS ROW -->
+    <div class="metrics-row">
+      <!-- CROWD COUNT CARD -->
+      <section class="card metric-card" id="cardCrowd">
+        <div class="card-header">
+          <div class="metric-title-group">
+            <span class="metric-badge">REGISTRATION</span>
+            <h3 class="card-label">Crowd Density Count</h3>
+          </div>
+          <span class="metric-status-tag" id="crowdStatusTag">Safe (< 5)</span>
+        </div>
+        
+        <div class="metric-value-container">
+          <div class="metric-large-number" id="crowdCountValue">0</div>
+          <div class="metric-unit-col">
+            <span class="metric-unit">Persons</span>
+            <span class="metric-sub" id="crowdCapacityPct">0% Max Threshold</span>
+          </div>
+        </div>
+
+        <!-- Progress Gauge Bar -->
+        <div class="capacity-gauge-track">
+          <div class="gauge-tier-mark mark-5" title="Warning Threshold (5)"></div>
+          <div class="gauge-tier-mark mark-10" title="Critical Alarm (10)"></div>
+          <div class="capacity-gauge-fill" id="capacityGaugeFill" style="width: 0%;"></div>
+        </div>
+        <div class="gauge-labels">
+          <span>0 (Empty)</span>
+          <span class="mid-warn">5 (Warning)</span>
+          <span class="max-danger">10+ (Critical)</span>
+        </div>
+
+        <!-- Quick Adjustment Actions -->
+        <div class="card-action-bar">
+          <button class="btn btn-sm btn-outline" id="btnSubCount" title="Decrease Count by 1">&minus; 1</button>
+          <button class="btn btn-sm btn-primary" id="btnAddCount" title="Increase Count by 1">+ 1 Entry</button>
+          <button class="btn btn-sm btn-ghost" id="btnResetCount" title="Reset Counter to 0">Reset</button>
+        </div>
+      </section>
+
+      <!-- ULTRASONIC DISTANCE SENSOR (HC-SR04) -->
+      <section class="card metric-card" id="cardUltrasonic">
+        <div class="card-header">
+          <div class="metric-title-group">
+            <span class="metric-badge">HC-SR04 SONAR</span>
+            <h3 class="card-label">Ultrasonic Distance</h3>
+          </div>
+          <span class="sonar-trigger-tag" id="sonarTriggerTag">CLEAR (&ge; 50 cm)</span>
+        </div>
+
+        <div class="metric-value-container">
+          <div class="metric-large-number" id="distanceValue">120</div>
+          <div class="metric-unit-col">
+            <span class="metric-unit">cm</span>
+            <span class="metric-sub">Trigger Zone: &lt; 50 cm</span>
+          </div>
+        </div>
+
+        <!-- Interactive Distance Slider -->
+        <div class="slider-control-group">
+          <div class="slider-header">
+            <label for="distanceSlider">Simulated Distance Control:</label>
+            <span class="slider-display" id="distanceSliderDisplay">120 cm</span>
+          </div>
+          <input type="range" id="distanceSlider" min="5" max="300" value="120" step="1" class="custom-range">
+          <div class="slider-ticks">
+            <span class="tick trigger-zone-tick">0-49cm (ENTRY)</span>
+            <span>100cm</span>
+            <span>200cm</span>
+            <span>300cm</span>
+          </div>
+        </div>
+
+        <!-- Sonar Visualizer Wave Radar -->
+        <div class="sonar-mini-radar">
+          <div class="radar-beam" id="radarBeam"></div>
+          <div class="radar-target" id="radarTarget" style="left: 40%;"></div>
+          <div class="radar-threshold-line" title="50cm Trigger Line"></div>
+          <span class="radar-zone-label">Trigger Boundary (&lt;50 cm)</span>
+        </div>
+      </section>
+
+      <!-- PIR MOTION SENSOR & GATE STATE -->
+      <section class="card metric-card" id="cardPIR">
+        <div class="card-header">
+          <div class="metric-title-group">
+            <span class="metric-badge">PIR INFRARED</span>
+            <h3 class="card-label">Motion &amp; Gate State</h3>
+          </div>
+          <span class="pir-status-pill" id="pirPill">NO MOTION</span>
+        </div>
+
+        <div class="pir-sensors-grid">
+          <div class="sensor-mini-tile">
+            <span class="tile-label">PIR SENSOR (Pin D2)</span>
+            <div class="tile-status" id="pirStatusText">LOW (0) &bull; Standby</div>
+            <div class="pir-toggle-wrap">
+              <label class="switch-toggle" for="pirToggle">
+                <input type="checkbox" id="pirToggle">
+                <span class="slider-switch"></span>
+              </label>
+              <span class="toggle-help">Trigger Motion</span>
+            </div>
+          </div>
+
+          <div class="sensor-mini-tile">
+            <span class="tile-label">GATE STATE (personCrossing)</span>
+            <div class="tile-status" id="crossingStatusText">ARMED &bull; false</div>
+            <p class="tile-hint">Latches true when distance &lt; 50 cm. Unlatches when cleared &ge; 50 cm.</p>
+          </div>
+        </div>
+
+        <!-- Debounce & Safety Timing -->
+        <div class="system-timing-footer">
+          <div class="timing-badge">
+            <svg class="icon-tiny" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span>Debounce Lock: 200 ms</span>
+          </div>
+          <div class="timing-badge">
+            <svg class="icon-tiny" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+            <span>Loop Cycle: 300 ms</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- MIDDLE SECTION: DIGITAL TWIN CORRIDOR & HARDWARE BENCH -->
+    <div class="middle-layout">
+      <!-- 2D DIGITAL TWIN CHECKPOINT CORRIDOR -->
+      <section class="card corridor-section" id="corridorSection">
+        <div class="card-header">
+          <div class="metric-title-group">
+            <span class="metric-badge">CHECKPOINT DIGITAL TWIN</span>
+            <h3 class="card-label">Interactive Entrance Corridor</h3>
+          </div>
+          <div class="corridor-controls">
+            <button class="btn btn-sm btn-primary" id="btnSimulatePerson">
+              <svg class="icon-tiny" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7.5" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+              <span>Walk Person Through Gate</span>
+            </button>
+            <button class="btn btn-sm btn-outline" id="btnAutoTraffic">
+              <svg class="icon-tiny" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+              <span id="autoTrafficText">Auto Crowd Sim: OFF</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="corridor-viewport" id="corridorViewport">
+          <!-- Corridor Background & Floor Grid -->
+          <div class="corridor-walkway">
+            <div class="corridor-flow-arrow"></div>
+            <div class="corridor-entry-gate">
+              <span class="gate-sign">ENTRY CHECKPOINT</span>
+            </div>
+
+            <!-- Ultrasonic Sensor Mount on Wall -->
+            <div class="sensor-mount sonar-mount">
+              <div class="sensor-device hc-sr04-mini" title="HC-SR04 Sensor (Trig: 3, Echo: 4)">
+                <div class="sonar-eye"></div>
+                <div class="sonar-eye"></div>
+              </div>
+              <div class="sonar-field" id="sonarFieldBeam"></div>
+            </div>
+
+            <!-- PIR Sensor Mount overhead -->
+            <div class="sensor-mount pir-mount">
+              <div class="pir-device-mini" title="PIR Motion Sensor (Pin: 2)">
+                <div class="pir-dome"></div>
+              </div>
+              <div class="pir-detection-cone" id="pirCone"></div>
+            </div>
+
+            <!-- 50cm Detection Threshold Line -->
+            <div class="checkpoint-threshold-zone">
+              <div class="threshold-barrier-line"></div>
+              <span class="barrier-text">50 cm DETECTION THRESHOLD</span>
+            </div>
+
+            <!-- Walking Avatar (Animated) -->
+            <div class="avatar-walker" id="avatarWalker">
+              <div class="avatar-head"></div>
+              <div class="avatar-body"></div>
+              <span class="avatar-label" id="avatarLabel">Visitor</span>
+            </div>
+
+            <div class="corridor-exit-gate">
+              <span class="gate-sign">SAFE VENUE AREA</span>
+            </div>
+          </div>
+        </div>
+        <p class="corridor-footnote">
+          * Clicking <strong>Walk Person Through Gate</strong> simulates an attendee crossing the ultrasonic sonar zone (&lt; 50 cm), triggering a count increment and testing system latency.
+        </p>
+      </section>
+
+      <!-- HARDWARE TEST BENCH (WOKWI TWIN) -->
+      <section class="card hardware-bench" id="hardwareBench">
+        <div class="card-header">
+          <div class="metric-title-group">
+            <span class="metric-badge">WOKWI HARDWARE TWIN</span>
+            <h3 class="card-label">Virtual Circuit Components</h3>
+          </div>
+          <span class="circuit-chip">Uno Pinout Synced</span>
+        </div>
+
+        <div class="hardware-components-grid">
+          <!-- 1. LEDs Bank -->
+          <div class="hw-module led-bank-module">
+            <div class="hw-module-title">STATUS LED INDICATORS (220&Omega;)</div>
+            <div class="leds-container">
+              <!-- Green LED -->
+              <div class="led-fixture">
+                <div class="led-bulb led-bulb-green active" id="hwLedGreen">
+                  <div class="bulb-core"></div>
+                </div>
+                <div class="led-reflection green-glow" id="glowGreen"></div>
+                <div class="led-meta">
+                  <span class="led-pin">PIN 8</span>
+                  <span class="led-name">GREEN</span>
+                  <span class="led-state" id="stateGreenText">HIGH (ON)</span>
+                </div>
+              </div>
+
+              <!-- Yellow LED -->
+              <div class="led-fixture">
+                <div class="led-bulb led-bulb-yellow" id="hwLedYellow">
+                  <div class="bulb-core"></div>
+                </div>
+                <div class="led-reflection yellow-glow" id="glowYellow"></div>
+                <div class="led-meta">
+                  <span class="led-pin">PIN 9</span>
+                  <span class="led-name">YELLOW</span>
+                  <span class="led-state" id="stateYellowText">LOW (OFF)</span>
+                </div>
+              </div>
+
+              <!-- Red LED -->
+              <div class="led-fixture">
+                <div class="led-bulb led-bulb-red" id="hwLedRed">
+                  <div class="bulb-core"></div>
+                </div>
+                <div class="led-reflection red-glow" id="glowRed"></div>
+                <div class="led-meta">
+                  <span class="led-pin">PIN 10</span>
+                  <span class="led-name">RED</span>
+                  <span class="led-state" id="stateRedText">LOW (OFF)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Piezo Buzzer Module -->
+          <div class="hw-module buzzer-module">
+            <div class="hw-module-title">PIEZO BUZZER (PIN 11 &bull; 1000 Hz)</div>
+            <div class="buzzer-visual-wrapper">
+              <div class="buzzer-housing" id="buzzerHousing">
+                <div class="buzzer-hole"></div>
+                <div class="sound-wave-ring ring-1" id="soundWave1"></div>
+                <div class="sound-wave-ring ring-2" id="soundWave2"></div>
+                <div class="sound-wave-ring ring-3" id="soundWave3"></div>
+              </div>
+              <div class="buzzer-info">
+                <div class="buzzer-frequency">Tone: <span id="buzzerFreqText">noTone() &bull; Silent</span></div>
+                <div class="buzzer-trigger-condition">Trigger: Count &ge; 10 (Critical Density)</div>
+                <button class="btn btn-xs btn-outline" id="btnTestBuzzer">Test 1kHz Beep (0.5s)</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Sensors Summary Pinout -->
+          <div class="hw-module pinout-summary-module">
+            <div class="hw-module-title">WIRING MAPPING TABLE</div>
+            <div class="pinout-compact-table">
+              <div class="pin-row"><span class="pin-wire trig">Pin D3 (Trig)</span> &rarr; HC-SR04 Trig</div>
+              <div class="pin-row"><span class="pin-wire echo">Pin D4 (Echo)</span> &rarr; HC-SR04 Echo</div>
+              <div class="pin-row"><span class="pin-wire pir">Pin D2 (Input)</span> &rarr; PIR OUT</div>
+              <div class="pin-row"><span class="pin-wire grn">Pin D8 (Output)</span> &rarr; Green LED (Safe)</div>
+              <div class="pin-row"><span class="pin-wire yel">Pin D9 (Output)</span> &rarr; Yellow LED (Warn)</div>
+              <div class="pin-row"><span class="pin-wire red">Pin D10 (Output)</span> &rarr; Red LED (Danger)</div>
+              <div class="pin-row"><span class="pin-wire bz">Pin D11 (Output)</span> &rarr; Buzzer (+)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- LOWER SECTION: LIVE TELEMETRY CHART & SERIAL MONITOR -->
+    <div class="lower-layout">
+      <!-- REAL-TIME TELEMETRY CHART -->
+      <section class="card chart-section" id="chartSection">
+        <div class="card-header">
+          <div class="metric-title-group">
+            <span class="metric-badge">TEMPORAL ANALYTICS</span>
+            <h3 class="card-label">Live Telemetry Trend</h3>
+          </div>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-color legend-crowd"></span> Crowd Count</span>
+            <span class="legend-item"><span class="legend-color legend-distance"></span> Distance (cm &divide; 10)</span>
+            <span class="legend-item"><span class="legend-color legend-threshold"></span> Critical Limit (10)</span>
+          </div>
+        </div>
+
+        <div class="canvas-container">
+          <canvas id="telemetryChart" width="800" height="260"></canvas>
+        </div>
+
+        <div class="chart-stats-bar">
+          <div class="cstat">
+            <span class="cstat-lbl">Session Entries:</span>
+            <span class="cstat-val" id="totalEntriesStat">0</span>
+          </div>
+          <div class="cstat">
+            <span class="cstat-lbl">Peak Density:</span>
+            <span class="cstat-val" id="peakDensityStat">0</span>
+          </div>
+          <div class="cstat">
+            <span class="cstat-lbl">Avg Distance:</span>
+            <span class="cstat-val" id="avgDistanceStat">120 cm</span>
+          </div>
+          <div class="cstat">
+            <span class="cstat-lbl">System Uptime:</span>
+            <span class="cstat-val" id="uptimeStat">00:00</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ARDUINO SERIAL MONITOR CONSOLE -->
+      <section class="card terminal-section" id="terminalSection">
+        <div class="card-header terminal-header">
+          <div class="terminal-title-group">
+            <div class="terminal-dots">
+              <span class="tdot red"></span>
+              <span class="tdot yellow"></span>
+              <span class="tdot green"></span>
+            </div>
+            <span class="card-label terminal-title">Serial Monitor &bull; 9600 Baud</span>
+          </div>
+          
+          <div class="terminal-actions">
+            <label class="autoscroll-label">
+              <input type="checkbox" id="chkAutoScroll" checked>
+              <span>Auto-scroll</span>
+            </label>
+            <button class="btn btn-xs btn-ghost" id="btnClearTerminal" title="Clear console">Clear</button>
+            <button class="btn btn-xs btn-ghost" id="btnCopyTerminal" title="Copy output">Copy</button>
+            <button class="btn btn-xs btn-ghost" id="btnPauseTerminal" title="Pause stream">Pause</button>
+          </div>
+        </div>
+
+        <div class="terminal-body" id="terminalBody">
+          <!-- Dynamic serial print output will be rendered here -->
+        </div>
+
+        <div class="terminal-footer">
+          <span class="terminal-status-info" id="terminalStatusInfo">COM Ready &bull; Emulating 9600-8-N-1</span>
+          <span class="terminal-count-info" id="terminalLineCount">0 lines</span>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- MODAL: PINOUT REFERENCE & CASE STUDY DOCUMENTATION -->
+  <div class="modal-backdrop" id="docsModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="badge-tag">LAB SPECIFICATION</span>
+          <h2>25EE256 - Sensor &amp; Instrumentation Case Study #2</h2>
+        </div>
+        <button class="btn-close-modal" id="btnCloseModal" aria-label="Close dialog">&times;</button>
+      </div>
+
+      <div class="modal-content">
+        <h3>1. System Description</h3>
+        <p>
+          The <strong>Smart Crowd Density Alert System</strong> monitors foot-traffic through an access corridor using an 
+          <strong>HC-SR04 ultrasonic distance sensor</strong> to measure target proximity and a <strong>PIR motion sensor</strong> 
+          to verify occupant presence.
+        </p>
+
+        <h3>2. State Machine &amp; Alert Tiers</h3>
+        <table class="specs-table">
+          <thead>
+            <tr>
+              <th>Tier Level</th>
+              <th>Crowd Count</th>
+              <th>Green LED (D8)</th>
+              <th>Yellow LED (D9)</th>
+              <th>Red LED (D10)</th>
+              <th>Buzzer (D11)</th>
+              <th>Diagnostic Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Tier 1: Normal</strong></td>
+              <td>&lt; 5</td>
+              <td><span class="badge green">HIGH</span></td>
+              <td>LOW</td>
+              <td>LOW</td>
+              <td>noTone()</td>
+              <td>Safe passage; optimal density</td>
+            </tr>
+            <tr>
+              <td><strong>Tier 2: Warning</strong></td>
+              <td>5 to 9</td>
+              <td>LOW</td>
+              <td><span class="badge yellow">HIGH</span></td>
+              <td>LOW</td>
+              <td>noTone()</td>
+              <td>Approaching venue capacity</td>
+            </tr>
+            <tr>
+              <td><strong>Tier 3: Critical</strong></td>
+              <td>&ge; 10</td>
+              <td>LOW</td>
+              <td>LOW</td>
+              <td><span class="badge red">HIGH</span></td>
+              <td><span class="badge red">tone(1000Hz)</span></td>
+              <td>OVERCROWDED! Evacuation / Diversion</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>3. Physics &amp; Sensing Formulas</h3>
+        <ul>
+          <li><strong>Ultrasonic Time-of-Flight:</strong> <code>distance (cm) = (duration &times; 0.0343) / 2</code> where sound speed is 343 m/s in air.</li>
+          <li><strong>Entry Registration:</strong> Counts when <code>distance &lt; 50 cm</code> and unlatches once <code>distance &ge; 50 cm</code> with a 200ms debounce.</li>
+          <li><strong>Execution Period:</strong> Main loop executes every <code>300 ms</code>.</li>
+        </ul>
+
+        <h3>4. Web Serial Physical Bridge</h3>
+        <p>
+          You can flash this Arduino code directly onto a real Arduino Uno via the Arduino IDE, connect your board to this PC via USB, and click <strong>"Connect USB Serial"</strong> at 9600 baud. The web application will automatically switch to hardware parsing mode!
+        </p>
+      </div>
+      
+      <div class="modal-footer">
+        <a href="https://wokwi.com/projects/476163947415643137" target="_blank" class="btn btn-wokwi">Open Original Wokwi Project</a>
+        <button class="btn btn-primary" id="btnModalCloseAction">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: THINGSPEAK IOT CLOUD CONFIGURATION -->
+  <div class="modal-backdrop" id="thingspeakModal" aria-hidden="true">
+    <div class="modal-dialog ts-modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="badge-tag">
+            <span class="pulse-dot"></span>
+            <span>MATHWORKS THINGSPEAK IOT</span>
+          </div>
+          <h2>Configure ThingSpeak Cloud API</h2>
+          <p class="modal-subheading">Sync telemetry between your Crowd Density system and ThingSpeak IoT channels.</p>
+        </div>
+        <button class="btn-close-modal" id="btnCloseTsModal" aria-label="Close dialog">&times;</button>
+      </div>
+
+      <div class="modal-content ts-modal-content">
+        <!-- Status Message Banner -->
+        <div class="ts-alert-box" id="tsAlertBox" style="display:none;"></div>
+
+        <form id="tsApiForm" onsubmit="return false;">
+          <div class="ts-form-grid">
+            <!-- Channel ID -->
+            <div class="form-group">
+              <label for="tsInputChannelId">ThingSpeak Channel ID <span class="req">*</span></label>
+              <input type="text" id="tsInputChannelId" class="form-input" placeholder="e.g. 3531433" value="3531433" required>
+              <span class="form-help">Found on your ThingSpeak Channel page.</span>
+            </div>
+
+            <!-- Sync Direction Mode -->
+            <div class="form-group">
+              <label for="tsSelectMode">Sync Direction</label>
+              <select id="tsSelectMode" class="form-select">
+                <option value="push" selected>Push (Publish local telemetry to ThingSpeak)</option>
+                <option value="pull">Pull (Monitor remote hardware from ThingSpeak)</option>
+              </select>
+              <span class="form-help">Push sends simulated/USB data; Pull fetches remote channel feeds.</span>
+            </div>
+
+            <!-- Write API Key -->
+            <div class="form-group">
+              <label for="tsInputWriteKey">Write API Key (Required for Push)</label>
+              <div class="input-with-action">
+                <input type="password" id="tsInputWriteKey" class="form-input" placeholder="16-character Write Key" value="SMC6F9WGAFKCSOA1">
+                <button type="button" class="btn-input-eye" id="btnToggleWriteKey" title="Toggle visibility">👁</button>
+              </div>
+              <span class="form-help">From Channel &rarr; API Keys tab.</span>
+            </div>
+
+            <!-- Read API Key -->
+            <div class="form-group">
+              <label for="tsInputReadKey">Read API Key (Optional for Public channels)</label>
+              <div class="input-with-action">
+                <input type="password" id="tsInputReadKey" class="form-input" placeholder="16-character Read Key" value="CZEXV3R3Z6256614">
+                <button type="button" class="btn-input-eye" id="btnToggleReadKey" title="Toggle visibility">👁</button>
+              </div>
+              <span class="form-help">Required if your channel is set to Private.</span>
+            </div>
+
+            <!-- Update Interval -->
+            <div class="form-group">
+              <label for="tsSelectInterval">Update Interval</label>
+              <select id="tsSelectInterval" class="form-select">
+                <option value="15000">15 Seconds (ThingSpeak Free Tier standard)</option>
+                <option value="20000">20 Seconds</option>
+                <option value="30000">30 Seconds</option>
+                <option value="60000">60 Seconds</option>
+              </select>
+              <span class="form-help">ThingSpeak rate limit: 1 update per 15 seconds.</span>
+            </div>
+
+            <!-- Auto Sync Toggle -->
+            <div class="form-group form-group-checkbox">
+              <label class="switch-toggle" for="tsAutoSyncToggle">
+                <input type="checkbox" id="tsAutoSyncToggle" checked>
+                <span class="slider-switch"></span>
+              </label>
+              <div class="switch-info">
+                <strong>Enable Automatic Cloud Sync</strong>
+                <span class="form-help">Periodically push or poll data at the chosen interval.</span>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Field Mappings Accordion / Summary -->
+        <div class="ts-field-guide">
+          <h4>ThingSpeak Field Assignment Mapping:</h4>
+          <div class="ts-fields-grid">
+            <div class="ts-fitem"><span class="f-badge">Field 1</span> <strong>Crowd Density Count</strong> (0 to 15+)</div>
+            <div class="ts-fitem"><span class="f-badge">Field 2</span> <strong>Distance</strong> (cm from HC-SR04)</div>
+            <div class="ts-fitem"><span class="f-badge">Field 3</span> <strong>PIR Motion</strong> (0: None, 1: Active)</div>
+            <div class="ts-fitem"><span class="f-badge">Field 4</span> <strong>Status Tier</strong> (1: Normal, 2: Warn, 3: Danger)</div>
+            <div class="ts-fitem"><span class="f-badge">Field 5</span> <strong>Buzzer State</strong> (0: Silent, 1: Sounding)</div>
+          </div>
+        </div>
+
+        <!-- Live Diagnostics Log for ThingSpeak -->
+        <div class="ts-diagnostics-box" id="tsDiagnosticsBox">
+          <div class="ts-diag-header">API Diagnostics Output:</div>
+          <div class="ts-diag-content" id="tsDiagContent">No tests performed yet. Enter your keys and click "Test Connection".</div>
+        </div>
+      </div>
+
+      <div class="modal-footer ts-modal-footer">
+        <button class="btn btn-danger-ghost" id="btnClearTsConfig">Clear &amp; Disconnect</button>
+        <button class="btn btn-outline" id="btnTestTsConnection">Test Connection</button>
+        <button class="btn btn-primary" id="btnSaveTsConfig">Save &amp; Start Sync</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
